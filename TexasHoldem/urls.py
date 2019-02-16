@@ -15,7 +15,16 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
+from texas import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url('^index/$', views.index),
+    url('^join/$', views.join_game),
+    url('^start/$', views.start_game),
+    url('^check/$', views.check),
+    url('^call/$', views.call),
+    url('^raise/$', views.raise_bet),
+    url('^fold/$', views.fold),
+    url('^info/$', views.info),
 ]

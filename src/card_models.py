@@ -1,4 +1,7 @@
-
+# -*- encoding:utf-8 -*-
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 class PokerCard(object):
 
@@ -20,18 +23,6 @@ class PokerCard(object):
         self.rank = rank
 
     def __repr__(self):
-        # s = ""
-        # if self.suit == 'Heart' or self.suit == 'Spade':
-        #     s = "%s %s  " % (self.suit, self.rank_symbol())
-        # elif self.suit == 'Club':
-        #     s = "%s %s   " % (self.suit, self.rank_symbol())
-        # elif self.suit == 'Diamond':
-        #     s = "%s %s" % (self.suit, self.rank_symbol())
-        #
-        # if self.rank == 10:
-        #     s = s + " "
-        #
-        # return s
         return "%s %s" % (self.suit, self.rank_symbol())
 
     def __cmp__(self, other):
