@@ -3,6 +3,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+
 class PokerCard(object):
 
     SUITS = ['Heart', 'Spade', 'Diamond', 'Club']

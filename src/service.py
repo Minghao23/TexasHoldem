@@ -1,10 +1,10 @@
 # -*- encoding:utf-8 -*-
+from texas_game import Player, Game
+import loggers
+
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
-from texas_game import Player, Game
-import loggers
 
 # Rules
 blind_money = 2
@@ -33,16 +33,17 @@ def start_game():
         logger.error("人数不足2，无法开始")
         raise Exception("Error")
     game.new_game()
+    game.log.append("<<<<<<<<<<<<<<<<<<<< Game Start >>>>>>>>>>>>>>>>>>>>")
     game.log.append("游戏开始")
-    game.log.append("大小盲自动下注")
 
     logger.info("大小盲自动下注")
-    if blind_money / 2 > game.players[game.pos_small_blind].money or blind_money > game.players[
-        game.pos_big_blind].money:
+    if blind_money / 2 > game.players[game.pos_small_blind].money or blind_money > game.players[game.pos_big_blind].money:
         logger.error("大小盲没钱了！游戏崩溃！")
         raise Exception("Error")
     game.players[game.pos_small_blind].bet(blind_money / 2)
     game.players[game.pos_big_blind].bet(blind_money)
+    game.log.append("（自动）小盲 %s 下注金额 %d" % (game.players[game.pos_small_blind].print_name(), blind_money / 2))
+    game.log.append("（自动）大盲 %s 下注金额 %d" % (game.players[game.pos_big_blind].print_name(), blind_money))
     game.highest_bet = blind_money
 
     logger.info("发底牌")
@@ -96,11 +97,16 @@ def player_action(action, amount=0):
         game.log.append("恭喜！")
         return
 
+    # find halting criteria
     next_player_pos = (player_pos + 1) % len(game.players)
+    if game.status == 'pre flop':
+        min_poll_count = len(game.players) - 1
+    else:
+        min_poll_count = len(game.players)
     while True:
         player = game.players[next_player_pos]
         game.action_num += 1
-        if game.action_num > len(game.players) and game.players[next_player_pos].cur_bet == game.highest_bet:
+        if game.action_num > min_poll_count and game.players[next_player_pos].cur_bet == game.highest_bet:
             next_step()
             return
         if player.status != 'in game':

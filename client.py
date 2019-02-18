@@ -1,10 +1,10 @@
 # -*- encoding:utf-8 -*-
+import requests
+import json
+
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
-import requests
-import json
 
 localhost = "127.0.0.1"
 # host = "192.168.1.160"
@@ -67,9 +67,9 @@ def info():
     print response.text
 
 
-# log(test_join, 'hmh')
-# log(test_join, 'lvc')
-# log(test_join, 'qk')
+log(test_join, 'hmh')
+log(test_join, 'lvc')
+log(test_join, 'qk')
 log(test_start)
 #
 # log(test_call)

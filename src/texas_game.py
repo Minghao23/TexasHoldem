@@ -1,9 +1,9 @@
 # -*- encoding:utf-8 -*-
+from card_models import CardDeckController
+
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
-from card_models import CardDeckController
 
 
 class User(object):
@@ -66,10 +66,6 @@ class Player(object):
     def bet(self, amount):
         amount = int(amount)
         if amount > self.money:
-            print "------", type(amount)
-            print "------", amount
-            print "------", type(self.money)
-            print "------", self.money
             raise Exception("Don't have enough money")
         self.money -= amount
         self.game.pot += amount

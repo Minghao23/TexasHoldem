@@ -1,9 +1,9 @@
-# -*- encoding:utf-8 -*-
+# -*- encoding:utf-8 -*
+from card_models import PokerCard
+
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
-from card_models import PokerCard
 
 
 class HandValue(object):
