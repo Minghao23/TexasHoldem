@@ -70,13 +70,22 @@ def info():
 log(test_join, 'hmh')
 log(test_join, 'lvc')
 log(test_join, 'qk')
+log(test_join, 'kp')
+log(test_join, 'djy')
+log(test_join, 'mm')
 log(test_start)
-#
+
+log(test_fold)
+log(test_fold)
+log(test_fold)
+log(test_fold)
+log(test_fold)
+
 # log(test_call)
 # log(test_call)
 
 # log(test_check)
 # log(test_fold)
-# log(test_raise, 30)
+# log(test_raise, 20)
 
 # info()

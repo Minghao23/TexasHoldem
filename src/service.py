@@ -36,7 +36,6 @@ def start_game():
     game.log.append("<<<<<<<<<<<<<<<<<<<< Game Start >>>>>>>>>>>>>>>>>>>>")
     game.log.append("游戏开始")
 
-    logger.info("大小盲自动下注")
     if blind_money / 2 > game.players[game.pos_small_blind].money or blind_money > game.players[game.pos_big_blind].money:
         logger.error("大小盲没钱了！游戏崩溃！")
         raise Exception("Error")
@@ -46,11 +45,9 @@ def start_game():
     game.log.append("（自动）大盲 %s 下注金额 %d" % (game.players[game.pos_big_blind].print_name(), blind_money))
     game.highest_bet = blind_money
 
-    logger.info("发底牌")
     game.log.append("开始发底牌")
     game.deal()
 
-    logger.info("--- Pre Flop ---")
     game.log.append("----------- Pre-Flop Round -----------")
     game.pre_flop()
     game.log.append("开始翻牌前（第一轮）下注，从大盲下一位开始行动")
@@ -83,11 +80,13 @@ def player_action(action, amount=0):
 
     # 如果场上只有一个玩家in game，直接判胜
     in_game_num = 0
-    for player in game.players:
-        if player.status == 'in game' or 'all in':
+    for p in game.players:
+        if p.status == 'in game' or p.status == 'all in':
             in_game_num += 1
+    print "----", in_game_num
     if in_game_num == 1:
         winners = game.players
+        game.log.append("----------- Showdown -----------")
         game.log.append("场上只剩一位玩家，游戏结束")
         game.log.append("赢得胜利的玩家是：%s" % winners[0].print_name())
         game.log.append("赢得胜利的牌型是：%s" % winners[0].best_hand_value)
@@ -114,6 +113,7 @@ def player_action(action, amount=0):
             next_player_pos = (next_player_pos + 1) % len(game.players)
         else:
             break
+
     game.log.append("请玩家 %s 开始行动" % player.print_name())
     game.active_player_pos = next_player_pos
 
