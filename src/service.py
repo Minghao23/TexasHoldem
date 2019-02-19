@@ -44,7 +44,6 @@ def offline(pos):
             if game.players[i].status != 'offline':
                 game.players[i].host = True
                 game.log.append("%s 成为了房主" % game.players[i].print_name())
-                logger.info("%s 成为了房主" % game.players[i].print_name())
                 break
             i += 1
 

@@ -9,4 +9,4 @@ import json
 
 
 def index(request):
-    return HttpResponse("Hello, this is Texas Hold'em Game, developed by Minghao23.")
+    return render(request, 'texas/index.html')
