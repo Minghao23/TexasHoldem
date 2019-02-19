@@ -24,19 +24,19 @@ class Player(object):
         self.host = False
 
         self.game = None
-        self.game_pos = None
+        self.pos = None
         self.first_hole = None
         self.second_hole = None
         self.cur_bet = 0
         self.best_hand_value = None
-        self.status = 'init'  # 'init', 'in game', 'all in', 'out game'
+        self.status = 'init'  # 'init', 'in game', 'all in', 'out game'， 'offline'
 
     def info(self):
         d = {}
         d['name'] = self.print_name()
         d['money'] = self.money
         d['host'] = self.host
-        d['game_pos'] = self.game_pos
+        d['pos'] = self.pos
         d['first_hole'] = str(self.first_hole)
         d['second_hole'] = str(self.second_hole)
         d['cur_bet'] = self.cur_bet
@@ -45,7 +45,7 @@ class Player(object):
         return d
 
     def print_name(self):
-        return "Player%d-%s" % (self.game_pos, self.username)
+        return "Player%d-%s" % (self.pos + 1, self.username)
 
     def print_holes(self):
         return "  <%s>  <%s>  " % (self.first_hole, self.second_hole)
@@ -126,8 +126,13 @@ class Game(object):
 
     def add_player(self, player):
         self.players.append(player)
-        player.game_pos = len(self.players)
         player.game = self
+        pos = 0
+        pos_list = [x.pos for x in self.players]
+        while pos in pos_list:
+            pos += 1
+        player.pos = pos
+        return player.pos
 
     def print_community_cards(self):
         if len(self.community_cards) == 0:
@@ -140,8 +145,12 @@ class Game(object):
         self.community_cards = []
         self.highest_bet = 0
         self.card_deck_controller.initialize()
-        for player in self.players:
-            player.clear()
+
+        for i in range(len(self.players) - 1, -1, 0):
+            if self.players[i].status == 'offline':
+                self.players.pop(i)
+            else:
+                self.players[i].clear()
 
         self.pos_button = (self.pos_button + 1) % len(self.players)
         self.pos_small_blind = (self.pos_small_blind + 1) % len(self.players)

@@ -8,30 +8,74 @@ sys.setdefaultencoding('utf-8')
 
 # Rules
 blind_money = 2
+init_money = 100
 max_players = 8
-bet_limit = 50
+min_players = 3
+bet_limit = 50  # don't consider upper limitation for now
+offline_pending_times = 10  # sec
 
 game = Game()
 logger = loggers.get_logger()
+
+offline_timer = {}
 
 
 def game_info():
     return game.info()
 
 
-def add_player(name, money=100):
+def heartbeat(pos):
+    if pos not in offline_timer:
+        raise Exception("No such player alive")
+    offline_timer[pos].reset(offline_pending_times)
+
+
+def offline(pos):
+    player = game.players[pos]
+    logger.info("玩家 %s 离线" % player.print_name())
+    game.log.append("玩家 %s 离线" % player.print_name())
+    offline_timer[pos].cancel()
+    offline_timer.pop(pos)
+    player.status = 'offline'
+    if player.host:
+        player.host = False
+        i = 0
+        while i < len(game.players):
+            if game.players[i].status != 'offline':
+                game.players[i].host = True
+                game.log.append("%s 成为了房主" % game.players[i].print_name())
+                logger.info("%s 成为了房主" % game.players[i].print_name())
+                break
+            i += 1
+
+
+def add_player(name, money=init_money):
+    if game.status not in ['showdown', 'init']:
+        raise Exception("Cannot join when game is running")
+    if len(game.players) >= max_players:
+        raise Exception("Only support %d players" % max_players)
     player = Player(name, money)
-    game.add_player(player)
+    pos = game.add_player(player)
+
+    # add timer
+    from timer import TimerReset
+    offline_timer[pos] = TimerReset(offline_pending_times, offline, [pos, ])
+    offline_timer[pos].start()
+
+    game.log.append("%s 加入了游戏" % player.print_name())
     if len(game.players) == 1:
         player.host = True
         game.log.append("%s 成为了房主" % player.print_name())
-    game.log.append("%s 加入了游戏" % player.print_name())
+    return pos, player.host
 
 
-def start_game():
-    if len(game.players) < 2:
-        logger.error("人数不足2，无法开始")
-        raise Exception("Error")
+def start_game(pos):
+    if len(game.players) < min_players:
+        logger.error("人数不足%d，无法开始" % min_players)
+        raise Exception("Number of players must be greater than %d" % min_players)
+    if not game.players[pos].host:
+        raise Exception("Only host can start game")
+
     game.new_game()
     game.log.append("<<<<<<<<<<<<<<<<<<<< Game Start >>>>>>>>>>>>>>>>>>>>")
     game.log.append("游戏开始")
@@ -57,8 +101,10 @@ def start_game():
     game.log.append("请玩家 %s 开始行动" % game.players[game.active_player_pos].print_name())
 
 
-def player_action(action, amount=0):
-    player_pos = game.active_player_pos
+def player_action(player_pos, action, amount=0):
+    if game.players[player_pos] != game.active_player_pos:
+        raise Exception("Not a correct player. Action doesn't permitted")
+
     player = game.players[player_pos]
 
     if player.status != 'in game':

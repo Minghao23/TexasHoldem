@@ -13,8 +13,15 @@ port = "8001"
 
 
 def test_join(name):
-    url = "http://%s:%s/join" % (host, port)
-    payload = {'name': name}
+    url = "http://%s:%s/api/v0/texas/join/%s" % (host, port, name)
+    # payload = {'name': name}
+    response = requests.request("GET", url)
+    return response.text
+
+
+def test_heartbeat(pos):
+    url = "http://%s:%s/api/v0/texas/heartbeat" % (host, port)
+    payload = {'pos': pos}
     response = requests.request("GET", url, params=payload)
     return response.text
 
@@ -62,24 +69,24 @@ def log(req, arg=None):
 
 
 def info():
-    url = "http://%s:%s/info" % (host, port)
+    url = "http://%s:%s/api/v0/texas/info" % (host, port)
     response = requests.request("GET", url)
     print response.text
 
 
-log(test_join, 'hmh')
-log(test_join, 'lvc')
-log(test_join, 'qk')
-log(test_join, 'kp')
-log(test_join, 'djy')
-log(test_join, 'mm')
-log(test_start)
-
-log(test_fold)
-log(test_fold)
-log(test_fold)
-log(test_fold)
-log(test_fold)
+# log(test_join, 'hmh')
+# log(test_join, 'lvc')
+# log(test_join, 'qk')
+# log(test_join, 'kp')
+# log(test_join, 'djy')
+# log(test_join, 'mm')
+# log(test_start)
+#
+# log(test_fold)
+# log(test_fold)
+# log(test_fold)
+# log(test_fold)
+# log(test_fold)
 
 # log(test_call)
 # log(test_call)
@@ -88,4 +95,8 @@ log(test_fold)
 # log(test_fold)
 # log(test_raise, 20)
 
+# info()
+
+print test_join('hmh')
+# test_heartbeat()
 # info()
