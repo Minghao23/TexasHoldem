@@ -9,7 +9,7 @@ sys.setdefaultencoding('utf-8')
 localhost = "127.0.0.1"
 # host = "192.168.1.160"
 host = localhost
-port = "8000"
+port = "8001"
 
 
 def test_join(name):

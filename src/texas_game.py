@@ -138,6 +138,7 @@ class Game(object):
     def new_game(self):
         self.pot = 0
         self.community_cards = []
+        self.highest_bet = 0
         self.card_deck_controller.initialize()
         for player in self.players:
             player.clear()
@@ -145,6 +146,8 @@ class Game(object):
         self.pos_button = (self.pos_button + 1) % len(self.players)
         self.pos_small_blind = (self.pos_small_blind + 1) % len(self.players)
         self.pos_big_blind = (self.pos_big_blind + 1) % len(self.players)
+        self.active_player_pos = -1
+        self.action_num = 0
         self.status = 'new game'
 
     def deal(self):
