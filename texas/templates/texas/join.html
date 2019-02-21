@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}TexasHoldem{% endblock %}
+
+{% block css %}
+<link rel="stylesheet"
+      href="/static/pages/join.css">
+{% endblock %}
+
+{% block content %}
+<div id="join_game">
+    <el-input v-model="username"></el-input>
+    <el-button @click="joinGame">加入游戏</el-button>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="/static/pages/join.js"></script>
+{% endblock %}

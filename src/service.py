@@ -60,7 +60,6 @@ def add_player(name, money=init_money):
     from timer import TimerReset
     offline_timer[pos] = TimerReset(offline_pending_times, offline, [pos, ])
     offline_timer[pos].start()
-
     game.log.append("%s 加入了游戏" % player.print_name())
     if len(game.players) == 1:
         player.host = True

@@ -146,7 +146,7 @@ class Game(object):
         self.highest_bet = 0
         self.card_deck_controller.initialize()
 
-        for i in range(len(self.players) - 1, -1, 0):
+        for i in range(len(self.players) - 1, -1, -1):
             if self.players[i].status == 'offline':
                 self.players.pop(i)
             else:

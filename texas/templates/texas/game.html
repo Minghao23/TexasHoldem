@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}TexasHoldem{% endblock %}
+
+{% block css %}
+<link rel="stylesheet"
+      href="/static/pages/game.css">
+{% endblock %}
+
+{% block content %}
+<div id="texas_game">
+    <el-button @click="startGame" v-if="gameInfo.status=='init' && curPlayer.host">开始游戏</el-button>
+    <div class="table-container">
+        <div v-for="(player,index) in gameInfo.players" v-if="player" class="table-cell">
+            <div :class="[{'hightlight': gameInfo.active_player_pos==index}, 'in-turn']">
+                <p>[[index]]</p>
+                <p> <span>name</span>: <span>[[player.name]]</span> </p>
+                <p> <span>status</span>: <span>[[player.status]]</span> </p>
+            </div>
+        </div>
+        <div :class="[{'hightlight': isTurn}, 'player-info']">
+            <div>myself</div>
+            <div>
+                <p> <span>当前押注</span>: <span>[[curPlayer.cur_bet]]</span> </p>
+                <p> <span>手牌1</span>: <span>[[curPlayer.first_hole]]</span> </p>
+                <p> <span>手牌2</span>: <span>[[curPlayer.second_hole]]</span> </p>
+                <p> <span>筹码</span>: <span>[[curPlayer.money]]</span> </p>
+                <p> <span>最大牌型</span>: <span>[[curPlayer.best_hand_value]]</span> </p>
+                <p> <span>筹码</span>: <span>[[curPlayer.money]]</span> </p>
+                <div class="operater-container">
+                    <el-button @click="call" :disabled="!isTurn">call</el-button>
+                    <el-button @click="check" :disabled="!isTurn">check</el-button>
+                    <el-button @click="fold" :disabled="!isTurn">fold</el-button>
+                    <el-input v-model="raiseMoney" class="raise-input">
+                        <el-button @click="raise" slot="append" :disabled="!isTurn">raise</el-button>
+                    </el-input>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="/static/pages/game.js"></script>
+{% endblock %}
