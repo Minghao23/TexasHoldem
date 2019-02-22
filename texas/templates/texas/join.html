@@ -9,8 +9,13 @@
 
 {% block content %}
 <div id="join_game">
-    <el-input v-model="username"></el-input>
-    <el-button @click="joinGame">加入游戏</el-button>
+    <div class="login-container">
+        <img src="/static/img/logo3.png" width="360px" height="171px" class="logo-img" alt="texas">
+        <div>
+            <el-input v-model="username" id="name-input" placeholder="Please input your name"></el-input>
+            <el-button @click="joinGame">加入游戏</el-button>
+        </div>
+    </div>
 </div>
 {% endblock %}
 

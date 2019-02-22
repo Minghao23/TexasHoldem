@@ -30,6 +30,8 @@ var game = new Vue({
       .then((resp) => {
         if(resp.data.status == 1) {
           console.log("游戏开始！");
+        } else {
+          this.$alert('开始异常！');
         }
       })
       .catch((error) => {
@@ -43,6 +45,8 @@ var game = new Vue({
       .then((resp) => {
         if(resp.data.status == 1) {
           console.log("check！");
+        } else {
+          this.$alert('check异常！');
         }
       })
       .catch((error) => {
@@ -56,6 +60,8 @@ var game = new Vue({
       .then((resp) => {
         if(resp.data.status == 1) {
           console.log("跟注成功！");
+        } else {
+          this.$alert('跟注异常！');
         }
       })
       .catch((error) => {
@@ -69,6 +75,8 @@ var game = new Vue({
       .then((resp) => {
         if(resp.data.status == 1) {
           console.log("弃牌成功！");
+        } else {
+          this.$alert('弃牌异常！');
         }
       })
       .catch((error) => {
@@ -82,6 +90,8 @@ var game = new Vue({
       .then((resp) => {
         if(resp.data.status == 1) {
           console.log("加注成功！");
+        } else {
+          this.$alert('加注异常！');
         }
       })
       .catch((error) => {
@@ -98,6 +108,7 @@ var game = new Vue({
           let result = resp.data;
           that.gameInfo = result.data;
           that.extractCurPlayer();
+          that.supplePos();
           setTimeout(function () {
             heartbeat();
           }, 2000);
@@ -116,6 +127,15 @@ var game = new Vue({
         if (item.pos == this.pos) {
           this.curPlayer = item;
           break;
+        }
+      }
+    },
+
+    supplePos: function(){
+      if (this.gameInfo.players.length < 8) {
+        let addN = 8 - this.gameInfo.players.length;
+        for (let i = 0; i < addN; i++) {
+          this.gameInfo.players.push({});
         }
       }
     }

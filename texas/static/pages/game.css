@@ -1,18 +1,36 @@
-.table-container {
+body {
+    margin: 0;
+}
+.game-container {
     width: 100%;
     height: 900px;
-    border-radius: 8px;
-    border: 1px solid cornflowerblue;
+    background: #326c9b;
+}
+.table-container {
+    width: 725px;
+    height: 437px;
+    left:20px;
+    top:20px;
+    padding: 15px;
+    border: 3px solid #392916;
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    background: #9a7d4e;
+    
 }
 
 .table-cell{
-    width: 200px;
-    height: 200px;
-    padding:10px;
+    width: 135px;
+    height: 135px;
+    padding: 8px;
+    font-size: 12px;
     border-radius: 8px;
-    margin:8px;
-    border: 1px solid salmon;
-    float: left
+    position: absolute;
+    box-sizing: border-box;
+    border: 2px solid salmon;
+    float: left;
+    color: aliceblue;
 }
 
 .hightlight {
@@ -21,20 +39,16 @@
 .in-turn {
     width: 100%;
     height: 100%;
-    box-sizing: border-box;
-    border-radius: 8px;
-    padding: 8px;
-    float: left;
 }
 .player-info{
-    padding:15px;
+    padding:12px;
     position: fixed;
-    background: #58D68D;
+    font-size: 14px;
+    background: #392916;
     border-radius: 2px;
     border: 2px solid #239B56;
     bottom: 20px;
-    left: 50%;
-    margin-left: -250px;
+    right: 10px;
     width: 500px;
     color: #EAFAF1;
 }
@@ -51,4 +65,72 @@
 .el-input-group>.el-input__inner {
     vertical-align: baseline;
     display: inline-block;
+}
+
+.cell0 {
+    margin-left: 151px;
+    margin-top: 8px;
+}
+.cell1 {
+    margin-left: 294px;
+    margin-top: 8px;
+}
+.cell2 {
+    margin-left: 437px;
+    margin-top: 8px;
+}
+.cell3 {
+    margin-left: 580px;
+    margin-top: 151px;
+}
+
+.cell4 {
+    margin-left: 437px;
+    margin-top: 294px;
+}
+.cell5 {
+    margin-left: 294px;
+    margin-top: 294px;
+}
+.cell6 {
+    margin-left: 151px;
+    margin-top: 294px;
+}
+
+.cell7 {
+    margin-left: 8px;
+    margin-top: 151px;
+}
+
+.poker-container {
+    width: 421px;
+    height: 135px;
+    position: absolute;
+    margin-left: 151px;
+    margin-top: 151px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    border: 2px solid salmon;
+    padding: 16px;
+}
+
+.poker {
+    margin-left: 8px;
+    color: bisque;
+}
+
+.info-container {
+    /* float: left; */
+    width: 300px;
+    height: 300px;
+    position: fixed;
+    right: 10px;
+    top: 20px;
+    border: 1px solid #cccccc;
+    overflow: auto;
+}
+
+.cell-row {
+    margin-top: 4px;
+    margin-bottom: 4px;
 }

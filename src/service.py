@@ -100,7 +100,7 @@ def start_game(pos):
 
 
 def player_action(player_pos, action, amount=0):
-    if game.players[player_pos] != game.active_player_pos:
+    if player_pos != game.active_player_pos:
         raise Exception("Not a correct player. Action doesn't permitted")
 
     player = game.players[player_pos]

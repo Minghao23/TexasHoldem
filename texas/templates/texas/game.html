@@ -9,17 +9,26 @@
 
 {% block content %}
 <div id="texas_game">
-    <el-button @click="startGame" v-if="gameInfo.status=='init' && curPlayer.host">开始游戏</el-button>
-    <div class="table-container">
-        <div v-for="(player,index) in gameInfo.players" v-if="player" class="table-cell">
-            <div :class="[{'hightlight': gameInfo.active_player_pos==index}, 'in-turn']">
-                <p>[[index]]</p>
-                <p> <span>name</span>: <span>[[player.name]]</span> </p>
-                <p> <span>status</span>: <span>[[player.status]]</span> </p>
+    <div class="game-container">
+        <div class="table-container">
+            <div v-for="(player,index) in gameInfo.players" v-if="player" :class="[{'hightlight': gameInfo.active_player_pos==index}, 'table-cell', 'cell'+index]">
+                <!-- <div :class="[{'hightlight': gameInfo.active_player_pos==index}, 'in-turn']"> -->
+                <div class="in-turn">
+                    <!-- <p>[[index]]</p> -->
+                    <p class="cell-row"> <span>name</span>: <span>[[player.name]]</span> </p>
+                    <p class="cell-row"> <span>status</span>: <span>[[player.status]]</span> </p>
+                    <p class="cell-row"> <span>当前押注</span>: <span>[[player.cur_bet]]</span> </p>
+                    <p class="cell-row"> <span>剩余筹码</span>: <span>[[player.money]]</span> </p>
+                </div>
+            </div>
+            <div class="poker-container">
+                <span class="poker" v-for="poker in gameInfo.community_cards">[[poker]]</span>
             </div>
         </div>
+        <div class="info-container">
+            <p v-for="info in gameInfo.log">[[info]]</p>
+        </div>
         <div :class="[{'hightlight': isTurn}, 'player-info']">
-            <div>myself</div>
             <div>
                 <p> <span>当前押注</span>: <span>[[curPlayer.cur_bet]]</span> </p>
                 <p> <span>手牌1</span>: <span>[[curPlayer.first_hole]]</span> </p>
@@ -28,6 +37,7 @@
                 <p> <span>最大牌型</span>: <span>[[curPlayer.best_hand_value]]</span> </p>
                 <p> <span>筹码</span>: <span>[[curPlayer.money]]</span> </p>
                 <div class="operater-container">
+                    <el-button @click="startGame" v-if="gameInfo.status=='init' && curPlayer.host" style="width:80px">start</el-button>
                     <el-button @click="call" :disabled="!isTurn">call</el-button>
                     <el-button @click="check" :disabled="!isTurn">check</el-button>
                     <el-button @click="fold" :disabled="!isTurn">fold</el-button>
