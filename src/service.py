@@ -7,11 +7,9 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 # Rules
-blind_money = 2
 init_money = 100
 max_players = 8
 min_players = 3
-bet_limit = 50  # don't consider upper limitation for now
 offline_pending_times = 10  # sec
 
 game = Game()
@@ -37,15 +35,34 @@ def offline(pos):
     offline_timer[pos].cancel()
     offline_timer.pop(pos)
     player.status = 'offline'
+    game.remove_offline_players()
+
+    # change host
     if player.host:
         player.host = False
-        i = 0
-        while i < len(game.players):
-            if game.players[i].status != 'offline':
-                game.players[i].host = True
-                game.log.append("%s 成为了房主" % game.players[i].print_name())
-                break
-            i += 1
+        for player in game.players:
+            if player is not None:
+                player.host = True
+                game.log.append("%s 成为了房主" % player.print_name())
+
+    # 如果场上只有一个玩家in game，直接判胜
+    if len(game.alive_players_indices) == 1:
+        winners = game.players
+        game.log.append("----------- Showdown -----------")
+        game.log.append("场上只剩一位玩家，游戏结束")
+        game.log.append("赢得胜利的玩家是：%s" % winners[0].print_name())
+        game.log.append("赢得胜利的牌型是：%s" % winners[0].best_hand_value)
+        game.log.append("赢取的金额为：%d" % game.pot)
+        game.checkout(winners)
+        game.status = 'showdown'
+        game.log.append("恭喜！")
+        return
+
+    # change active player
+    if player.pos == game.active_player_pos:
+        next_pos = game.find_next_active_pos(player.pos)
+        game.active_player_pos = next_pos
+        game.log.append("请玩家 %s 开始行动" % game.players[next_pos].print_name())
 
 
 def add_player(name, money=init_money):
@@ -61,7 +78,9 @@ def add_player(name, money=init_money):
     offline_timer[pos] = TimerReset(offline_pending_times, offline, [pos, ])
     offline_timer[pos].start()
     game.log.append("%s 加入了游戏" % player.print_name())
-    if len(game.players) == 1:
+
+    # assign the first host
+    if len(filter(lambda x: x is not None, game.players)) == 1:
         player.host = True
         game.log.append("%s 成为了房主" % player.print_name())
     return pos, player.host
@@ -75,17 +94,19 @@ def start_game(pos):
         raise Exception("Only host can start game")
 
     game.new_game()
-    game.log.append("<<<<<<<<<<<<<<<<<<<< Game Start >>>>>>>>>>>>>>>>>>>>")
+    game.log.append("<<<<<<<<<<<< Game Start >>>>>>>>>>>>")
     game.log.append("游戏开始")
 
-    if blind_money / 2 > game.players[game.pos_small_blind].money or blind_money > game.players[game.pos_big_blind].money:
+    # big blind and small blind bet
+    if game.blind_money / 2 > game.players[game.pos_small_blind].money or \
+            game.blind_money > game.players[game.pos_big_blind].money:
         logger.error("大小盲没钱了！游戏崩溃！")
-        raise Exception("Error")
-    game.players[game.pos_small_blind].bet(blind_money / 2)
-    game.players[game.pos_big_blind].bet(blind_money)
-    game.log.append("（自动）小盲 %s 下注金额 %d" % (game.players[game.pos_small_blind].print_name(), blind_money / 2))
-    game.log.append("（自动）大盲 %s 下注金额 %d" % (game.players[game.pos_big_blind].print_name(), blind_money))
-    game.highest_bet = blind_money
+        raise Exception("Big blind or small blind has no enough money")
+    game.players[game.pos_small_blind].bet(game.blind_money / 2)
+    game.players[game.pos_big_blind].bet(game.blind_money)
+    game.log.append("（自动）小盲 %s 下注金额 %d" % (game.players[game.pos_small_blind].print_name(), game.blind_money / 2))
+    game.log.append("（自动）大盲 %s 下注金额 %d" % (game.players[game.pos_big_blind].print_name(), game.blind_money))
+    game.highest_bet = game.blind_money
 
     game.log.append("开始发底牌")
     game.deal()
@@ -93,9 +114,8 @@ def start_game(pos):
     game.log.append("----------- Pre-Flop Round -----------")
     game.pre_flop()
     game.log.append("开始翻牌前（第一轮）下注，从大盲下一位开始行动")
-    game.action_num = 1
 
-    game.active_player_pos = (game.pos_big_blind + 1) % len(game.players)
+    game.active_player_pos = game.find_next_active_pos(game.pos_big_blind)
     game.log.append("请玩家 %s 开始行动" % game.players[game.active_player_pos].print_name())
 
 
@@ -105,17 +125,24 @@ def player_action(player_pos, action, amount=0):
 
     player = game.players[player_pos]
 
-    if player.status != 'in game':
+    if player is None or player.status != 'in game':
         logger.error("玩家无法活动！")
         raise Exception("Error")
 
     if action == 'check':
+        if player.cur_bet != game.highest_bet:
+            raise Exception("Check condition was not satisfied")
         player.check()
         game.log.append("玩家 %s 选择了 Check(让牌)" % player.print_name())
     elif action == 'call':
+        if player.cur_bet > game.highest_bet:
+            raise Exception("Call condition was not satisfied")
         player.call()
         game.log.append("玩家 %s 选择了 Call(跟注)" % player.print_name())
     elif action == 'raise':
+        amount = int(amount)
+        if player.cur_bet + amount <= game.highest_bet or amount > player.money:
+            raise Exception("Raise condition was not satisfied")
         player.raise_bet(amount)
         game.log.append("玩家 %s 选择了 Raise(加注)，加注金额 %d" % (player.print_name(), amount))
     elif action == 'fold':
@@ -123,12 +150,7 @@ def player_action(player_pos, action, amount=0):
         game.log.append("玩家 %s 选择了 Fold(弃牌)" % player.print_name())
 
     # 如果场上只有一个玩家in game，直接判胜
-    in_game_num = 0
-    for p in game.players:
-        if p.status == 'in game' or p.status == 'all in':
-            in_game_num += 1
-    print "----", in_game_num
-    if in_game_num == 1:
+    if len(game.alive_players_indices) == 1:
         winners = game.players
         game.log.append("----------- Showdown -----------")
         game.log.append("场上只剩一位玩家，游戏结束")
@@ -141,25 +163,27 @@ def player_action(player_pos, action, amount=0):
         return
 
     # find halting criteria
-    next_player_pos = (player_pos + 1) % len(game.players)
     if game.status == 'pre flop':
-        min_poll_count = len(game.players) - 1
+        end_pos = game.pos_big_blind
     else:
-        min_poll_count = len(game.players)
-    while True:
-        player = game.players[next_player_pos]
-        game.action_num += 1
-        if game.action_num > min_poll_count and game.players[next_player_pos].cur_bet == game.highest_bet:
-            next_step()
-            return
-        if player.status != 'in game':
-            game.log.append("跳过玩家 %s" % player.print_name())
-            next_player_pos = (next_player_pos + 1) % len(game.players)
-        else:
-            break
+        end_pos = game.pos_small_blind
 
-    game.log.append("请玩家 %s 开始行动" % player.print_name())
-    game.active_player_pos = next_player_pos
+    next_pos = (player.pos + 1) % game.num_players
+    while True:
+        if next_pos == end_pos:
+            game.next_stage_flag = True
+        if game.players[next_pos] is not None:
+            if game.next_stage_flag and game.players[next_pos].cur_bet == game.highest_bet:
+                next_step()
+                return
+            if game.players[next_pos].status != 'in game':
+                game.log.append("跳过玩家 %s" % game.players[next_pos].print_name())
+            else:
+                break
+        next_pos = (next_pos + 1) % game.num_players
+
+    game.log.append("请玩家 %s 开始行动" % game.players[next_pos].print_name())
+    game.active_player_pos = next_pos
 
 
 def next_step():
@@ -169,8 +193,8 @@ def next_step():
         game.flop()
         game.log.append("----------- Flop Round -----------")
         game.log.append("开始翻牌圈（第二轮）下注，从小盲开始行动")
-        game.action_num = 1
         game.active_player_pos = game.pos_small_blind
+        game.next_stage_flag = False
         game.log.append("请玩家 %s 开始行动" % game.players[game.active_player_pos].print_name())
     elif game.status == 'flop':
         game.log.append("结束翻牌圈（第二轮）下注")
@@ -178,8 +202,8 @@ def next_step():
         game.turn()
         game.log.append("----------- Turn Round -----------")
         game.log.append("开始转牌圈（第三轮）下注，从小盲开始行动")
-        game.action_num = 1
         game.active_player_pos = game.pos_small_blind
+        game.next_stage_flag = False
         game.log.append("请玩家 %s 开始行动" % game.players[game.active_player_pos].print_name())
     elif game.status == 'turn':
         game.log.append("结束转牌圈（第三轮）下注")
@@ -187,8 +211,8 @@ def next_step():
         game.river()
         game.log.append("----------- River Round -----------")
         game.log.append("开始河牌圈（第四轮）下注，从小盲开始行动")
-        game.action_num = 1
         game.active_player_pos = game.pos_small_blind
+        game.next_stage_flag = False
         game.log.append("请玩家 %s 开始行动" % game.players[game.active_player_pos].print_name())
     elif game.status == 'river':
         game.log.append("结束河牌圈（第四轮）下注")

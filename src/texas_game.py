@@ -2,6 +2,7 @@
 from card_models import CardDeckController
 
 import sys
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -65,6 +66,8 @@ class Player(object):
 
     def bet(self, amount):
         amount = int(amount)
+        if amount < self.game.blind_money:
+            raise Exception("Must bet more than blind money %d" % self.game.blind_money)
         if amount > self.money:
             raise Exception("Don't have enough money")
         self.money -= amount
@@ -89,23 +92,29 @@ class Player(object):
         self.bet(self.money)
 
     def fold(self):
+        self.game.alive_players_indices.remove(self.pos)
         self.status = 'out game'
 
 
 class Game(object):
 
-    def __init__(self):
+    def __init__(self, blind_money=2, num_players=8, bet_limit=50):
+        self.blind_money = blind_money
+        self.num_players = num_players
+        self.bet_limit = bet_limit  # don't consider upper limitation for now
+
         self.pot = 0
         self.community_cards = []
         self.highest_bet = 0
-        self.players = []
-        self.pos_button = 0
-        self.pos_small_blind = 1
-        self.pos_big_blind = 2
+        self.players = [None for _ in range(num_players)]
+        self.pos_button = -1
+        self.pos_small_blind = -1
+        self.pos_big_blind = -1
         self.active_player_pos = -1
         self.status = 'init'  # 'init', 'new game', 'pre flop', 'flop', 'turn', 'river', 'showdown'
         self.log = ['Welcome to Texas Hold\'em Poker Game v1.0-alpha']
-        self.action_num = 0
+        self.next_stage_flag = False
+        self.alive_players_indices = []
 
         self.card_deck_controller = CardDeckController()
         self.card_deck_controller.add_card_deck()
@@ -125,13 +134,19 @@ class Game(object):
         return d
 
     def add_player(self, player):
-        self.players.append(player)
+
+        # find a vacant position
+        new_pos = 0
+        while self.players[new_pos] is not None:
+            new_pos += 1
+
+        if new_pos >= self.num_players:
+            raise Exception("Can't add players any more")
+
         player.game = self
-        pos = 0
-        pos_list = [x.pos for x in self.players]
-        while pos in pos_list:
-            pos += 1
-        player.pos = pos
+        player.pos = new_pos
+        self.players[new_pos] = player
+
         return player.pos
 
     def print_community_cards(self):
@@ -140,39 +155,53 @@ class Game(object):
         s = ">  <".join(map(str, self.community_cards))
         return "  <%s>  " % s
 
+    def remove_offline_players(self):
+        for i in range(len(self.players)):
+            if self.players[i] is not None and self.players[i].status == 'offline':
+                self.players[i] = None
+                self.alive_players_indices.remove(i)
+
+    def find_next_active_pos(self, pos):
+        next_pos = (pos + 1) % self.num_players
+        while self.players[next_pos] is None or self.players[next_pos].status != 'in game':
+            next_pos = (next_pos + 1) % self.num_players
+        return next_pos
+
     def new_game(self):
         self.pot = 0
         self.community_cards = []
         self.highest_bet = 0
         self.card_deck_controller.initialize()
 
-        for i in range(len(self.players) - 1, -1, -1):
-            if self.players[i].status == 'offline':
-                self.players.pop(i)
-            else:
-                self.players[i].clear()
+        # initialize players
+        self.alive_players_indices = []
+        self.remove_offline_players()
+        for player in self.players:
+            if player is not None:
+                player.clear()
+                self.alive_players_indices.append(player.pos)
 
-        self.pos_button = (self.pos_button + 1) % len(self.players)
-        self.pos_small_blind = (self.pos_small_blind + 1) % len(self.players)
-        self.pos_big_blind = (self.pos_big_blind + 1) % len(self.players)
+        self.pos_button = self.find_next_active_pos(self.pos_button)
+        self.pos_small_blind = self.find_next_active_pos(self.pos_button)
+        self.pos_big_blind = self.find_next_active_pos(self.pos_small_blind)
         self.active_player_pos = -1
-        self.action_num = 0
+        self.next_stage_flag = False
         self.status = 'new game'
 
     def deal(self):
-        n = len(self.players)
-
         # round-1
-        for i in range(self.pos_button, self.pos_button + n):
-            j = i % n
-            if self.players[j].first_hole is not None or self.players[j].second_hole is not None:
-                raise Exception("Didn't clear players' holes")
-            self.players[j].first_hole = self.card_deck_controller.deal()
+        for i in range(self.pos_button, self.pos_button + self.num_players):
+            player = self.players[i % self.num_players]
+            if player is not None:
+                if player.first_hole is not None or player.second_hole is not None:
+                    raise Exception("Didn't clear players' holes")
+                player.first_hole = self.card_deck_controller.deal()
 
         # round-2
-        for i in range(self.pos_button, self.pos_button + n):
-            j = i % n
-            self.players[j].second_hole = self.card_deck_controller.deal()
+        for i in range(self.pos_button, self.pos_button + self.num_players):
+            player = self.players[i % self.num_players]
+            if player is not None:
+                player.first_hole = self.card_deck_controller.deal()
 
     def pre_flop(self):
         self.status = 'pre flop'
@@ -181,38 +210,36 @@ class Game(object):
         self.community_cards.append(self.card_deck_controller.deal())
         self.community_cards.append(self.card_deck_controller.deal())
         self.community_cards.append(self.card_deck_controller.deal())
-        for player in self.players:
-            player.update_best_hand_value()
+        for pos in self.alive_players_indices:
+            self.players[pos].update_best_hand_value()
         self.status = 'flop'
 
     def turn(self):
         self.community_cards.append(self.card_deck_controller.deal())
-        for player in self.players:
-            player.update_best_hand_value()
+        for pos in self.alive_players_indices:
+            self.players[pos].update_best_hand_value()
         self.status = 'turn'
 
     def river(self):
         self.community_cards.append(self.card_deck_controller.deal())
-        for player in self.players:
-            player.update_best_hand_value()
+        for pos in self.alive_players_indices:
+            self.players[pos].update_best_hand_value()
         self.status = 'river'
 
     def showdown(self):
-        alive_players = filter(lambda x: x.status == 'in game' or x.status == 'all in', self.players)
-        win_hand_value = max([x.best_hand_value for x in alive_players])
+        win_hand_value = max([self.players[pos].best_hand_value for pos in self.alive_players_indices])
         winners = []
-        for player in self.players:
-            if player.status == 'in game' or player.status == 'all in':
-                if player.best_hand_value == win_hand_value:
-                    winners.append(player)
+        for pos in self.alive_players_indices:
+            if self.players[pos].best_hand_value == win_hand_value:
+                winners.append(self.players[pos])
         self.status = 'showdown'
         return winners
 
     def checkout(self, winners):
+        # TODO solve all in players, add side pot
         num_winners = len(winners)
         prize = self.pot / num_winners
         for winner in winners:
             winner.money += prize
-        self.pot = 0
 
         return prize

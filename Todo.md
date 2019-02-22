@@ -12,3 +12,5 @@
 3. [service] 加 allin 边池，结算算法优化
 4. [service,frontend] 登陆信息用 cookie 保存，v0.1登陆信息暂存页面中，关闭页面用户状态会丢失，不科学
 5. [service] 加离线重连
+6. [model] 加最高押注上限
+6. [model] 返回json隐藏其他玩家的手牌
