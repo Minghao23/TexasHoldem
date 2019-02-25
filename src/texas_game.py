@@ -124,7 +124,7 @@ class Game(object):
         d['pot'] = self.pot
         d['community_cards'] = map(str, self.community_cards)
         d['highest_bet'] = self.highest_bet
-        d['players'] = [x.info() for x in self.players]
+        d['players'] = [x.info() if x is not None else x for x in self.players]
         d['pos_button'] = self.pos_button
         d['pos_small_blind'] = self.pos_small_blind
         d['pos_big_blind'] = self.pos_big_blind
