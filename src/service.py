@@ -68,7 +68,7 @@ def offline(pos):
 def add_player(name, money=init_money):
     if game.status not in ['showdown', 'init']:
         raise Exception("Cannot join when game is running")
-    if len(game.players) >= max_players:
+    if len(filter(lambda x: x is not None, game.players)) >= max_players:
         raise Exception("Only support %d players" % max_players)
     player = Player(name, money)
     pos = game.add_player(player)
