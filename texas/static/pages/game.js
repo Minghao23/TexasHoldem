@@ -132,10 +132,9 @@ var game = new Vue({
     },
 
     supplePos: function(){
-      if (this.gameInfo.players.length < 8) {
-        let addN = 8 - this.gameInfo.players.length;
-        for (let i = 0; i < addN; i++) {
-          this.gameInfo.players.push({});
+      for (let i=0; i < this.gameInfo.players.length; i++) {
+        if (!this.gameInfo.players[i]) {
+          this.gameInfo.players[i] = {}
         }
       }
     }
